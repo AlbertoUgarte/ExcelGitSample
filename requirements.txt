@@ -1,0 +1,4 @@
+gitpython
+typing
+openpyxl
+robotframework-excellib
