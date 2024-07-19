@@ -21,12 +21,14 @@ class GitOperations(object):
     def _adjust_project_path(self):
         # Check if the project path needs adjustment based on known structure
         expected_path = "/home/services/suite/tests"
-        if self._project_path == expected_path:
+        if self._project_path.endswith("tests"):
             # Adjust path to go up one level if in live testing
-            self._project_path = os.path.join(expected_path, "..", self._project_name)
+            self._project_path = os.path.join(self._project_path, "..", self._project_name)
         else:
             self._project_path = os.path.join(self._project_path, self._project_name)
         
+        # Normalize the path to remove any redundant separators or up-level references
+        self._project_path = os.path.normpath(self._project_path)
         logger.console(f"DEBUG: Adjusted Project Path - {self._project_path}")
 
     @keyword
