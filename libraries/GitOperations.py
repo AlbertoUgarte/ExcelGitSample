@@ -11,6 +11,7 @@ class GitOperations(object):
         # Execution path is different in normal test runs and in Live Testing,
         # and we need to take that into account
         self._project_path = os.getcwd()
+        logger.console(self._project_path)
 
         # SCRIPTS env variable contains the suite name (except locally)
         if self._project_name != "None":
