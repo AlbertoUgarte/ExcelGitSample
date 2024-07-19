@@ -1,44 +1,42 @@
-import os
 from robot.api import logger
-from robot.api.deco import keyword
+import os
 import git
+from robot.api.deco import keyword
 
 class GitOperations(object):
 
     def __init__(self):
         self._project_name = str(os.environ.get("SCRIPTS"))
-        logger.console(self._project_name)
-        # Execution path is different in normal test runs and in Live Testing,
-        # and we need to take that into account
+        logger.console(f"DEBUG: Project Name - {self._project_name}")
+        
         self._project_path = os.getcwd()
-        logger.console(self._project_path)
+        logger.console(f"DEBUG: Initial Project Path - {self._project_path}")
 
-        # SCRIPTS env variable contains the suite name (except locally)
         if self._project_name != "None":
             if self._project_path == "/home/services/suite/tests":
-                # We are in live testing and project name is not in project path
                 self._project_path = os.path.join("/home/services/suite/")
             else:
-                self._project_path = os.path.join(os.getcwd(), self._project_name)
+                self._project_path = os.path.join(self._project_path, self._project_name)
 
-        logger.console(self._project_path)
+        logger.console(f"DEBUG: Adjusted Project Path - {self._project_path}")
         self._data_path = os.path.join(self._project_path, "data/")
-        logger.console(self._data_path)
+        logger.console(f"DEBUG: Data Path - {self._data_path}")
 
     @keyword
     def commit_and_push(self, file_name, git_branch):
-
         path_to_file = os.path.join(self._data_path, file_name)
-        logger.console(f"Path to File: {path_to_file}")  # Log the full path to the file
+        logger.console(f"DEBUG: Path to File - {path_to_file}")  # Log the full path to the file
 
-        # Repo exists in project path
         my_repo = git.Repo(self._project_path)
-        logger.console(f"Repository Active Branch: {my_repo.active_branch}")  # Log the active branch of the repo
+        logger.console(f"DEBUG: Repository Active Branch - {my_repo.active_branch}")  # Log the active branch of the repo
 
         # Print git status to console for visibility
-        logger.console("\n" + my_repo.git.status() + "\n")
+        logger.console(f"DEBUG: Git Status Before Operations:\n{my_repo.git.status()}\n")
 
         # Add, commit and push to git
         my_repo.index.add(path_to_file)
-        my_repo.index.commit("CRT robot committing changes to {}".format(file_name))
+        my_repo.index.commit(f"CRT robot committing changes to {file_name}")
         my_repo.git.push("origin", git_branch)
+
+        # Optionally, you can log the git status after the operations
+        logger.console(f"DEBUG: Git Status After Operations:\n{my_repo.git.status()}\n")
