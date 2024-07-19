@@ -29,9 +29,11 @@ class GitOperations(object):
     def commit_and_push(self, file_name, git_branch):
 
         path_to_file = os.path.join(self._data_path, file_name)
+        logger.console(f"Path to File: {path_to_file}")  # Log the full path to the file
 
         # Repo exists in project path
         my_repo = git.Repo(self._project_path)
+        logger.console(f"Repository Active Branch: {my_repo.active_branch}")  # Log the active branch of the repo
 
         # Print git status to console for visibility
         logger.console("\n" + my_repo.git.status() + "\n")
