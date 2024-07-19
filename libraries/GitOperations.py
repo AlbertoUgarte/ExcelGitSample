@@ -7,7 +7,7 @@ class GitOperations(object):
 
     def __init__(self):
         self._project_name = str(os.environ.get("SCRIPTS"))
-
+        logger.console(self._project_name)
         # Execution path is different in normal test runs and in Live Testing,
         # and we need to take that into account
         self._project_path = os.getcwd()
