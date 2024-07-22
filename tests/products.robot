@@ -1,51 +1,52 @@
-from robot.api import logger
-import os
-import git
-from robot.api.deco import keyword
+*** Settings ***
+Resource                ../resources/common.resource
+Test Teardown           Close All Excel Documents
+Suite Setup             Setup Browser
+Suite Teardown          End Suite
 
-class GitOperations(object):
+*** Test Cases ***
+Verify Products
+    [Documentation]     Read product names from excel sheet and verify that those can be found from a webshop page
+    [Tags]              excel    products    verify
+    GoTo                ${webshop}
+    VerifyText          Find your spirit animal
 
-    def __init__(self):
-        self._project_name = str(os.environ.get("SCRIPTS", "default_project_name"))
-        logger.console(f"DEBUG: Project Name - {self._project_name}")
-        
-        self._project_path = os.getcwd()
-        logger.console(f"DEBUG: Initial Project Path - {self._project_path}")
+    # Open existing workbook
+    ${document}=        Open Excel Document    ${excel_worksheet}    products
 
-        # Adjust the project path based on the environment
-        self._adjust_project_path()
+    # Start reading values from the second row, max number needs to be provided with offset
+    ${product_names}=   Read Excel Column    col_num=1    max_num=6    row_offset=1    sheet_name=Fur
 
-        self._data_path = os.path.join(self._project_path, "data/")
-        logger.console(f"DEBUG: Data Path - {self._data_path}")
+    # Loop through all product names and verify they are available in the webshop page
+    FOR    ${item}    IN    @{product_names}
+        VerifyText           ${item}
+    END
 
-    def _adjust_project_path(self):
-        # Check if the project path needs adjustment based on known structure
-        expected_path = "/home/services/suite/tests"
-        if self._project_path.endswith("tests"):
-            # Adjust path to go up one level if in live testing
-            self._project_path = os.path.join(self._project_path, "..", self._project_name)
-        else:
-            self._project_path = os.path.join(self._project_path, self._project_name)
-        
-        # Normalize the path to remove any redundant separators or up-level references
-        self._project_path = os.path.normpath(self._project_path)
-        logger.console(f"DEBUG: Adjusted Project Path - {self._project_path}")
+Update Product Id
+    [Documentation]     Update product id to an excel sheet and save changes
+    [Tags]              excel    products    update
+    GoTo                ${webshop}
+    VerifyText          Find your spirit animal
 
-    @keyword
-    def commit_and_push(self, file_name, git_branch):
-        path_to_file = os.path.join(self._data_path, file_name)
-        logger.console(f"DEBUG: Path to File - {path_to_file}")
+    # Open existing workbook
+    ${document}=        Open Excel Document    ${excel_worksheet}    products
 
-        try:
-            my_repo = git.Repo(self._project_path)
-            logger.console(f"DEBUG: Repository Active Branch - {my_repo.active_branch}")
-            logger.console(f"DEBUG: Git Status Before Operations:\n{my_repo.git.status()}\n")
+    # Create new unique product id
+    ${new_id}=          Generate Random String    length=6    chars=[NUMBERS]
 
-            my_repo.index.add(path_to_file)
-            my_repo.index.commit(f"CRT robot committing changes to {file_name}")
-            my_repo.git.push("origin", git_branch)
+    # Get the current product id
+    ${current_id}=      Read Excel Cell    row_num=2    col_num=2    sheet_name=Fur
 
-            logger.console(f"DEBUG: Git Status After Operations:\n{my_repo.git.status()}\n")
-        except Exception as e:
-            logger.console(f"ERROR: {str(e)}")
-            raise
+    # Write new product id to the excel
+    Write Excel Cell    row_num=2    col_num=2    value=${new_id}    sheet_name=Fur
+
+    # Check that new value was updated to excel
+    ${updated_id}=      Read Excel Cell    row_num=2    col_num=2    sheet_name=Fur
+    Should Be Equal As Strings    ${new_id}    ${updated_id}
+
+    # Save changes to excel and commit to git
+    Save Excel Document  ${excel_worksheet}
+    Log To Console       ${CURDIR}  
+    Log To Console       ${git_branch}
+    Log To Console       ${excel_worksheet} 
+    Commit And Push     ${excel_worksheet}     ${git_branch}
