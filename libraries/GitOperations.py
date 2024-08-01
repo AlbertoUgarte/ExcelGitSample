@@ -28,18 +28,24 @@ class GitOperations(object):
     @keyword
     def commit_and_push(self, file_name, git_branch):
         path_to_file = os.path.join(self._data_path, file_name)
-        logger.console(f"DEBUG: Path to File - {path_to_file}")  # Log the full path to the file
+        logger.console(f"DEBUG: Path to File - {path_to_file}")
 
         my_repo = git.Repo(self._project_path)
-        logger.console(f"DEBUG: Repository Active Branch - {my_repo.active_branch}")  # Log the active branch of the repo
+        logger.console(f"DEBUG: Repository Active Branch - {my_repo.active_branch}")
 
-        # Print git status to console for visibility
-        logger.console(f"DEBUG: Git Status Before Operations:\n{my_repo.git.status()}\n")
+        try:
+            # Pull changes from the remote repository
+            my_repo.git.pull('origin', git_branch)
+            logger.console("Pulled latest changes from the remote repository.")
 
-        # Add, commit and push to git
-        my_repo.index.add(path_to_file)
-        my_repo.index.commit(f"CRT robot committing changes to {file_name}")
-        my_repo.git.push("origin", git_branch)
+            # Add, commit and push to git
+            my_repo.index.add(path_to_file)
+            my_repo.index.commit(f"CRT robot committing changes to {file_name}")
+            my_repo.git.push("origin", git_branch)
+            logger.console("Changes pushed successfully to the remote repository.")
 
-        # Optionally, you can log the git status after the operations
+        except GitCommandError as e:
+            logger.console(f"ERROR: Git command failed: {str(e)}")
+            raise
+
         logger.console(f"DEBUG: Git Status After Operations:\n{my_repo.git.status()}\n")
