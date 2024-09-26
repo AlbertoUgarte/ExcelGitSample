@@ -36,6 +36,7 @@ Update Product Id
 
     # Get the current product id
     ${current_id}=      Read Excel Cell    row_num=2    col_num=2    sheet_name=Fur
+    Log To Console       ${current_id}
 
     # Write new product id to the excel
     Write Excel Cell    row_num=2    col_num=2    value=${new_id}    sheet_name=Fur
